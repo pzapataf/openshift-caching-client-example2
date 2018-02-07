@@ -55,7 +55,7 @@ public class HotRodOpenshiftExample {
         // Hot Rod client setup
         builder
             .addServer().host(HR_SERVICE_ENDPOINT).port(HR_SERVER_PORT)
-            .clientIntelligence(ClientIntelligence.BASIC)
+            .clientIntelligence(ClientIntelligence.HASH_DISTRIBUTION_AWARE)
             .security()
                 .authentication()
                     .username(HR_SERVICE_USER)
