@@ -15,33 +15,51 @@ import java.util.concurrent.TimeUnit;
  * Example of how to configure a Hot Rod client to access a JDG cluster in Openshift Online,
  */
 public class HotRodOpenshiftExample {
-    static int HR_SERVER_PORT = 443;
-    static String USER = "test";
-    static String PASSWORD = "test";
-    static String TRUST_STORE_NAME = "caching-service-trust-store.jks";
-    static String TRUST_PASSWORD = "secret";
+
+    private static String getEnv(String var) {
+        String value = System.getenv(var);
+        System.out.println(" -> " + var + " =" + value);
+        return value;
+    }
 
     public static void main(String[] args) throws FileNotFoundException, InterruptedException {
 
-        // We will use system variables
-        if (!new File(TRUST_STORE_NAME).exists()) {
-            System.out.println("You need to generate a trust store with the service certificate first");
+        System.out.println("======================================================");
+        System.out.println("Supplied environment variables:\n\n");
+        System.getenv().forEach((k,v)-> System.out.println(k + "=" + v));
+        System.out.println("======================================================");
+        System.out.println("Required variables:\n\n");
+        String HR_SERVICE_ENDPOINT = getEnv("HOT_ROD_SERVICE_ENDPOINT");
+        String HR_SERVICE_USER     = getEnv("HOT_ROD_SERVICE_USER");
+        String HR_SERVICE_PASSWORD = getEnv("HOT_ROD_SERVICE_PASSWORD");
+        String HR_SERVICE_TRUST_STORE_PATH = getEnv("HR_SERVICE_TRUST_STORE_PATH");
+        String HR_SERVICE_TRUST_STORE_PASSWORD = getEnv("HR_SERVICE_TRUST_STORE_PASSWORD");
+        int HR_SERVER_PORT=443;
+
+        System.out.println("======================================================");
+        if( HR_SERVICE_ENDPOINT == null || HR_SERVICE_USER == null || HR_SERVICE_PASSWORD == null || HR_SERVICE_TRUST_STORE_PATH == null ||  HR_SERVICE_TRUST_STORE_PASSWORD == null) {
+            System.out.println("Missing parameters!");
             return;
         }
 
+        // We will use system variables
+        File trustStoreFile = new File(HR_SERVICE_TRUST_STORE_PATH);
 
-        String HR_SERVER_ENDPOINT = args[0];
+        if (!trustStoreFile.exists() || !trustStoreFile.canRead()) {
+            System.out.println("Trust store at path " + trustStoreFile.getPath() + " must exist" );
+            return;
+        }
 
         ConfigurationBuilder builder = new ConfigurationBuilder();
 
         // Hot Rod client setup
         builder
-            .addServer().host(HR_SERVER_ENDPOINT).port(HR_SERVER_PORT)
-            .clientIntelligence(ClientIntelligence.BASIC)
+            .addServer().host(HR_SERVICE_ENDPOINT).port(HR_SERVER_PORT)
+            .clientIntelligence(ClientIntelligence.TOPOLOGY_AWARE)
             .security()
                 .authentication()
-                    .username(USER)
-                    .password(PASSWORD)
+                    .username(HR_SERVICE_USER)
+                    .password(HR_SERVICE_PASSWORD)
                     .realm("ApplicationRealm")
                     .saslMechanism("DIGEST-MD5")
                     .saslQop(SaslQop.AUTH)
@@ -49,12 +67,12 @@ public class HotRodOpenshiftExample {
                     .enable()
                 .ssl()
                     .enable()
-                    .sniHostName(HR_SERVER_ENDPOINT)
-                    .trustStoreFileName(TRUST_STORE_NAME)
-                    .trustStorePassword(TRUST_PASSWORD.toCharArray());
+                    .sniHostName(HR_SERVICE_ENDPOINT)
+                    .trustStoreFileName(HR_SERVICE_TRUST_STORE_PATH)
+                    .trustStorePassword(HR_SERVICE_TRUST_STORE_PASSWORD.toCharArray());
 
         // Connect to the server
-        System.out.println("Connecting to " + HR_SERVER_ENDPOINT + ":" + HR_SERVER_PORT);
+        System.out.println("Connecting to " + HR_SERVICE_ENDPOINT + ":" + HR_SERVER_PORT);
 
         RemoteCacheManager cacheManager = new RemoteCacheManager(builder.build());
 
@@ -63,7 +81,7 @@ public class HotRodOpenshiftExample {
 
         // Start using Hot Rod
         try {
-            System.out.println("[Ctrl+C] to stop");
+            System.out.println("Kill pod to stop");
             while (true) {
                 cache.put("test", Instant.now().toString());
                 System.out.println("Value from Cache: " + cache.get("test"));
