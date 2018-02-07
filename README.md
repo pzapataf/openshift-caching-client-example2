@@ -1,0 +1,1 @@
+# openshift-caching-client-example2
