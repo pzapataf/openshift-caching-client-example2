@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 
-CACHING_SERVICE_NAMESPACE="my-example"
+CACHING_SERVICE_NAMESPACE="caching-service-example"
+
 
 echo "Changing active project to ${CACHING_SERVICE_NAMESPACE}"
 oc project ${CACHING_SERVICE_NAMESPACE}
@@ -16,13 +17,9 @@ keytool -import -noprompt -v -trustcacerts -keyalg RSA -alias "Caching Service" 
 
 rm caching-service.cer
 
-# Clean
-#oc delete pods,services,routes,builds,bc,dc -l app=openshift-caching-client-example2
-#oc delete secret caching-service-truststore
-
 echo "Creating new application from source"
 oc new-app redhat-openjdk18-openshift~https://github.com/pzapataf/openshift-caching-client-example2 JAVA_MAIN_CLASS=com.redhat.openshift.caching.examples.HotRodOpenshiftExample \
--e HOT_ROD_SERVICE_ENDPOINT=caching-service-app-hotrod.my-example.svc \
+-e HOT_ROD_SERVICE_ENDPOINT=caching-service-app-hotrod.${CACHING_SERVICE_NAMESPACE}.svc \
 -e HOT_ROD_SERVICE_USER=test \
 -e HOT_ROD_SERVICE_PASSWORD=test \
 -e HR_SERVICE_TRUST_STORE_PATH=/truststore/caching-service-trust-store.jks \
@@ -38,3 +35,11 @@ oc secret new caching-service-truststore caching-service-trust-store.jks=./cachi
 
 echo "Mounting secret caching-service-truststore in /trustore in deployment config"
 ## TODO: Adding secret to application
+
+echo "To build example: "
+echo "  oc start-build openshift-caching-client-example2"
+echo "  oc logs -f bc/openshift-caching-client-example2"
+
+echo "To clean up example: "
+echo "  oc delete pods,services,routes,builds,bc,dc -l app=openshift-caching-client-example2"
+echo "  oc delete secret caching-service-truststore"
