@@ -34,7 +34,7 @@ echo "Creating secret for application"
 oc secret new caching-service-truststore caching-service-trust-store.jks=./caching-service-trust-store.jks
 
 echo "Mounting secret caching-service-truststore in /trustore in deployment config"
-## TODO: Adding secret to application
+oc volume dc/openshift-caching-client-example2 --add -t secret -m /truststore --secret-name=caching-service-truststore
 
 echo "To build example: "
 echo "  oc start-build openshift-caching-client-example2"
@@ -43,3 +43,4 @@ echo "  oc logs -f bc/openshift-caching-client-example2"
 echo "To clean up example: "
 echo "  oc delete pods,services,routes,builds,bc,dc -l app=openshift-caching-client-example2"
 echo "  oc delete secret caching-service-truststore"
+echo "  oc delete is openshift-caching-client-example2"
