@@ -18,12 +18,7 @@ keytool -import -noprompt -v -trustcacerts -keyalg RSA -alias "Caching Service" 
 rm caching-service.cer
 
 echo "Creating new application from source"
-oc new-app redhat-openjdk18-openshift~https://github.com/pzapataf/openshift-caching-client-example2 JAVA_MAIN_CLASS=com.redhat.openshift.caching.examples.HotRodOpenshiftExample \
--e HOT_ROD_SERVICE_ENDPOINT=caching-service-app-hotrod.${CACHING_SERVICE_NAMESPACE}.svc \
--e HOT_ROD_SERVICE_USER=test \
--e HOT_ROD_SERVICE_PASSWORD=test \
--e HR_SERVICE_TRUST_STORE_PATH=/truststore/caching-service-trust-store.jks \
--e HR_SERVICE_TRUST_STORE_PASSWORD=secret
+oc new-app redhat-openjdk18-openshift~https://github.com/pzapataf/openshift-caching-client-example2 JAVA_MAIN_CLASS=com.redhat.openshift.caching.examples.HotRodOpenshiftExample
 
 echo "Build logs"
 echo "----------------------------------------------------------------------------------------------------------------------"
@@ -32,6 +27,12 @@ oc logs -f bc/openshift-caching-client-example2
 
 echo "Creating secret for application"
 oc secret new caching-service-truststore caching-service-trust-store.jks=./caching-service-trust-store.jks
+
+echo "Creating environment"
+# Copy variables from caching-service secrets : APPLICATION_USER, APPLICATION_PASSWORD
+oc set env dc/openshift-caching-client-example2 --from=secret/caching-service-app
+oc set env dc/openshift-caching-client-example2 HOT_ROD_SERVICE_ENDPOINT=caching-service-app-hotrod.${CACHING_SERVICE_NAMESPACE}.svc
+oc set env dc/openshift-caching-client-example2 HR_SERVICE_TRUST_STORE_PASSWORD=secret
 
 echo "Mounting secret caching-service-truststore in /trustore in deployment config"
 oc volume dc/openshift-caching-client-example2 --add -t secret -m /truststore --secret-name=caching-service-truststore

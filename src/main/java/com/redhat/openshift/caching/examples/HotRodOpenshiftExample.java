@@ -30,8 +30,8 @@ public class HotRodOpenshiftExample {
         System.out.println("======================================================");
         System.out.println("Required variables:\n");
         String HR_SERVICE_ENDPOINT = getEnv("HOT_ROD_SERVICE_ENDPOINT");
-        String HR_SERVICE_USER     = getEnv("HOT_ROD_SERVICE_USER");
-        String HR_SERVICE_PASSWORD = getEnv("HOT_ROD_SERVICE_PASSWORD");
+        String HR_SERVICE_USER     = getEnv("APPLICATION_USER");
+        String HR_SERVICE_PASSWORD = getEnv("APPLICATION_PASSWORD");
         String HR_SERVICE_TRUST_STORE_PATH = getEnv("HR_SERVICE_TRUST_STORE_PATH");
         String HR_SERVICE_TRUST_STORE_PASSWORD = getEnv("HR_SERVICE_TRUST_STORE_PASSWORD");
         int HR_SERVER_PORT=11222;
